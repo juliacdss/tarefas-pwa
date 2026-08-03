@@ -75,6 +75,9 @@ export const useTasksStore = defineStore('tasks', () => {
       error.value = 'Erro ao editar tarefa.';
       console.error(err);
     }
+    console.log('ENVIANDO:', title);
+    console.log('PAYLOAD:', payload);
+    console.log('ID:', id);
   }
 
   return {
