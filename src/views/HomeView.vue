@@ -2,6 +2,12 @@
   <div>
     <p v-if="store.error" class="error-message">{{ store.error }}</p>
 
+    <input
+      v-model="store.filterText"
+      placeholder="Buscar tarefas..."
+      class="search-input"
+    />
+
     <TaskForm
       :editing-task="editingTask"
       @add="handleAdd"
@@ -119,5 +125,14 @@ function handleRemove(id) {
   color: #666;
   font-size: 0.9rem;
   padding: 8px 0;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 0.95rem;
 }
 </style>
