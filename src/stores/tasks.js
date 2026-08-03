@@ -6,20 +6,9 @@ export const useTasksStore = defineStore('tasks', () => {
   const tasks = ref([]);
   const loading = ref(false);
   const error = ref(null);
-  const filterText = ref('');
 
-  const pendingTasks = computed(() =>
-  filteredTasks.value.filter((t) => !t.done)
-);
-
-const completedTasks = computed(() =>
-  filteredTasks.value.filter((t) => t.done)
-);
-  const filteredTasks = computed(() => {
-  return tasks.value.filter((t) =>
-    t.title.toLowerCase().includes(filterText.value.toLowerCase())
-  );
-});
+  const pendingTasks = computed(() => tasks.value.filter((t) => !t.done));
+  const completedTasks = computed(() => tasks.value.filter((t) => t.done));
 
   async function fetchTasks() {
     loading.value = true;
@@ -72,11 +61,14 @@ const completedTasks = computed(() =>
     }
   }
 
-  async function updateTaskTitle(id, title) {
-    if (!title.trim()) return;
+  async function updateTask(id, { title, imgAttachmentKey } = {}) {
+    if (title !== undefined && !title.trim()) return;
     error.value = null;
+    const payload = {};
+    if (title !== undefined) payload.title = title.trim();
+    if (imgAttachmentKey != null) payload.img_attachment_key = imgAttachmentKey;
     try {
-      const response = await tasksApi.update(id, { title: title.trim() });
+      const response = await tasksApi.update(id, payload);
       const index = tasks.value.findIndex((t) => t.id === id);
       if (index !== -1) tasks.value[index] = response.data;
     } catch (err) {
@@ -92,11 +84,9 @@ const completedTasks = computed(() =>
     pendingTasks,
     completedTasks,
     fetchTasks,
-    filterText,
-    filteredTasks,
     addTask,
     toggleTask,
     removeTask,
-    updateTaskTitle,
+    updateTask,
   };
 });
