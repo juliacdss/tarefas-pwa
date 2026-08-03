@@ -1,6 +1,9 @@
 <template>
   <div>
-    <p v-if="store.error" class="error-message">{{ store.error }}</p>
+    <div v-if="store.error" class="error-message">
+        {{ store.error }}
+        <button @click="store.fetchTasks()">Tentar novamente</button>
+    </div>
 
     <input
       v-model="store.filterText"
@@ -134,5 +137,15 @@ function handleRemove(id) {
   border-radius: 8px;
   border: 1px solid #ccc;
   font-size: 0.95rem;
+}
+
+.error-message button {
+  margin-left: 10px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background-color: #e74c3c;
+  color: white;
+  cursor: pointer;
 }
 </style>
