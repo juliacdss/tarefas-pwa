@@ -1,15 +1,11 @@
 <template>
   <div>
     <div v-if="store.error" class="error-message">
-        {{ store.error }}
-        <button @click="store.fetchTasks()">Tentar novamente</button>
+      {{ store.error }}
+      <button @click="store.fetchTasks()">Tentar novamente</button>
     </div>
 
-    <input
-      v-model="store.filterText"
-      placeholder="Buscar tarefas..."
-      class="search-input"
-    />
+    <input v-model="store.filterText" placeholder="Buscar tarefas..." class="search-input" />
 
     <TaskForm
       :editing-task="editingTask"
@@ -22,9 +18,7 @@
 
     <template v-else>
       <section v-if="store.pendingTasks.length > 0">
-        <h2 class="section-title">
-          Pendentes ({{ store.pendingTasks.length }})
-        </h2>
+        <h2 class="section-title">Pendentes ({{ store.pendingTasks.length }})</h2>
         <TaskItem
           v-for="task in store.pendingTasks"
           :key="task.id"
@@ -36,9 +30,7 @@
       </section>
 
       <section v-if="store.completedTasks.length > 0">
-        <h2 class="section-title">
-          Concluídas ({{ store.completedTasks.length }})
-        </h2>
+        <h2 class="section-title">Concluídas ({{ store.completedTasks.length }})</h2>
         <TaskItem
           v-for="task in store.completedTasks"
           :key="task.id"
@@ -59,43 +51,43 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
-import TaskForm from '../components/TaskForm.vue';
-import TaskItem from '../components/TaskItem.vue';
-import InstallButton from '../components/InstallButton.vue';
-import { useTasksStore } from '../stores/tasks.js';
+import { onMounted, ref } from 'vue'
+import TaskForm from '../components/TaskForm.vue'
+import TaskItem from '../components/TaskItem.vue'
+import InstallButton from '../components/InstallButton.vue'
+import { useTasksStore } from '../stores/tasks.js'
 
-const store = useTasksStore();
-const editingTask = ref(null);
+const store = useTasksStore()
+const editingTask = ref(null)
 
 onMounted(() => {
-  store.fetchTasks();
-});
+  store.fetchTasks()
+})
 
 function handleAdd(payload) {
-  store.addTask(payload);
+  store.addTask(payload)
 }
 
-function handleUpdate(id, title, imgAttachmentKey) {
-  store.updateTask(id, { title, imgAttachmentKey });
-  editingTask.value = null;
+function handleUpdate(id, payload) {
+  store.updateTask(id, payload)
+  editingTask.value = null
 }
 
 function handleCancel() {
-  editingTask.value = null;
+  editingTask.value = null
 }
 
 function handleEdit(task) {
-  editingTask.value = task;
+  editingTask.value = task
 }
 
 function handleToggle(id) {
-  store.toggleTask(id);
+  store.toggleTask(id)
 }
 
 function handleRemove(id) {
-  if (editingTask.value?.id === id) editingTask.value = null;
-  store.removeTask(id);
+  if (editingTask.value?.id === id) editingTask.value = null
+  store.removeTask(id)
 }
 </script>
 
