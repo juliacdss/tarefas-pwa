@@ -11,12 +11,16 @@
     </div>
 
     <div class="image-section">
+
+      <!-- Preview da imagem já salva ou capturada -->
       <img
         v-if="previewUrl || editingTask?.img_url"
         :src="previewUrl || editingTask?.img_url"
         class="image-preview"
         alt="Imagem da tarefa"
       />
+
+       <!-- Input com capture (padrão) -->
       <label class="image-label" :class="{ disabled: uploading }">
         <span v-if="uploading" class="upload-status">Enviando...</span>
         <span v-else>
@@ -37,6 +41,17 @@
           @change="handleImageChange"
         />
       </label>
+
+      <!-- Alternativa com preview ao vivo -->
+      <button
+        type="button"
+        class="task-button-secondary"
+        @click="showCameraCapture = !showCameraCapture"
+      >
+        {{ showCameraCapture ? 'Fechar câmera' : 'Abrir preview ao vivo' }}
+      </button>
+
+      <CameraCapture v-if="showCameraCapture" @captured="handleCameraCapture" />
       <p class="image-help">
         Em celular, o botão pode abrir a câmera. Em notebook, abre o seletor de arquivos.
       </p>
@@ -47,6 +62,9 @@
 <script setup>
 import { ref, watch } from 'vue'
 import tasksApi from '../api/tasksApi.js'
+import CameraCapture from './CameraCapture.vue'
+
+const showCameraCapture = ref(false)
 
 const props = defineProps({
   editingTask: {
@@ -117,6 +135,23 @@ function handleCancel() {
   previewUrl.value = null
   imgAttachmentKey.value = null
   emit('cancel')
+}
+
+function handleCameraCapture(file) {
+  previewUrl.value = URL.createObjectURL(file);
+  uploading.value = true;
+  tasksApi
+    .uploadImage(file)
+    .then((response) => {
+      imgAttachmentKey.value = response.data.attachment_key;
+    })
+    .catch((err) => {
+      console.error(err);
+      previewUrl.value = null;
+    })
+    .finally(() => {
+      uploading.value = false;
+    });
 }
 </script>
 
