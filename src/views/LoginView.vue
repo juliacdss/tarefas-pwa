@@ -53,7 +53,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
-const route = useRoute() 
+const route = useRoute()
 const authStore = useAuthStore()
 
 const email = ref('')
@@ -69,9 +69,7 @@ async function handleLogin() {
     await authStore.login(email.value, password.value)
     router.push('/')
   } catch (err) {
-    errorMessage.value =
-      err.response?.data?.detail ??
-      'Erro ao entrar. Verifique suas credenciais.'
+    errorMessage.value = err.response?.data?.detail ?? 'Erro ao entrar. Verifique suas credenciais.'
   } finally {
     loading.value = false
   }
@@ -85,7 +83,7 @@ async function handleLogin() {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background: linear-gradient(135deg, #4f46e5, #3b82f6);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
 }
 
 /* card */
@@ -124,7 +122,7 @@ async function handleLogin() {
 }
 
 .field input:focus {
-  border-color: #4f46e5;
+  border-color: var(--color-primary);
   outline: none;
 }
 
@@ -132,7 +130,7 @@ async function handleLogin() {
 button {
   width: 100%;
   padding: 0.7rem;
-  background: #4f46e5;
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 6px;
@@ -142,7 +140,7 @@ button {
 }
 
 button:hover {
-  background: #4338ca;
+  background: var(--color-primary-dark);
 }
 
 button:disabled {
@@ -177,7 +175,7 @@ p {
 }
 
 a {
-  color: #4f46e5;
+  color: var(--color-primary);
   font-weight: 500;
   text-decoration: none;
 }

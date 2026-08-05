@@ -2,16 +2,14 @@
   <div v-if="needRefresh" class="update-prompt">
     <p>Uma nova versão está disponível.</p>
     <div class="update-actions">
-      <button class="update-button" @click="updateServiceWorker()">
-        Atualizar agora
-      </button>
+      <button class="update-button" @click="updateServiceWorker()">Atualizar agora</button>
       <button class="dismiss-button" @click="close()">Depois</button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { useRegisterSW } from 'virtual:pwa-register/vue';
+import { useRegisterSW } from 'virtual:pwa-register/vue'
 
 const { needRefresh, updateServiceWorker } = useRegisterSW({
   onRegisteredSW(swUrl, registration) {
@@ -19,19 +17,19 @@ const { needRefresh, updateServiceWorker } = useRegisterSW({
     if (registration) {
       setInterval(
         () => {
-          registration.update();
+          registration.update()
         },
         60 * 60 * 1000,
-      );
+      )
     }
   },
   onRegisterError(error) {
-    console.error('Erro ao registrar o Service Worker:', error);
+    console.error('Erro ao registrar o Service Worker:', error)
   },
-});
+})
 
 function close() {
-  needRefresh.value = false;
+  needRefresh.value = false
 }
 </script>
 
@@ -64,7 +62,7 @@ function close() {
 
 .update-button {
   padding: 8px 16px;
-  background-color: #4a90d9;
+  background-color: var(--color-primary);
   color: white;
   border: none;
   border-radius: 6px;
@@ -73,7 +71,7 @@ function close() {
 }
 
 .update-button:hover {
-  background-color: #357abd;
+  background-color: var(--color-primary-dark);
 }
 
 .dismiss-button {

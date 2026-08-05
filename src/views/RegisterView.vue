@@ -35,39 +35,38 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-import authApi from '@/api/authApi';
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import authApi from '@/api/authApi'
 
-const router = useRouter();
+const router = useRouter()
 
-const email = ref('');
-const password = ref('');
-const confirmPassword = ref('');
-const loading = ref(false);
-const errorMessage = ref('');
+const email = ref('')
+const password = ref('')
+const confirmPassword = ref('')
+const loading = ref(false)
+const errorMessage = ref('')
 
 async function handleRegister() {
-  errorMessage.value = '';
+  errorMessage.value = ''
 
   // validação frontend
   if (password.value !== confirmPassword.value) {
-    errorMessage.value = 'As senhas não coincidem';
-    return;
+    errorMessage.value = 'As senhas não coincidem'
+    return
   }
 
-  loading.value = true;
+  loading.value = true
 
   try {
-    await authApi.register(email.value, password.value);
+    await authApi.register(email.value, password.value)
 
     // redireciona com query param
-    router.push('/login?registered=true');
+    router.push('/login?registered=true')
   } catch (err) {
-    errorMessage.value =
-      err.response?.data?.detail || 'Erro ao cadastrar';
+    errorMessage.value = err.response?.data?.detail || 'Erro ao cadastrar'
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 </script>
@@ -79,7 +78,7 @@ async function handleRegister() {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #4f46e5, #3b82f6);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
   padding: 1rem;
 }
 
@@ -119,7 +118,7 @@ async function handleRegister() {
 }
 
 .field input:focus {
-  border-color: #4f46e5;
+  border-color: var(--color-primary);
   outline: none;
   box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
 }
@@ -128,7 +127,7 @@ async function handleRegister() {
 button {
   width: 100%;
   padding: 0.8rem;
-  background: #4f46e5;
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 6px;
@@ -138,7 +137,7 @@ button {
 }
 
 button:hover {
-  background: #4338ca;
+  background: var(--color-primary-dark);
 }
 
 button:disabled {
@@ -173,7 +172,7 @@ p {
 }
 
 a {
-  color: #4f46e5;
+  color: var(--color-primary);
   font-weight: 500;
   text-decoration: none;
 }

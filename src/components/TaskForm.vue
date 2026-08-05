@@ -190,12 +190,12 @@ function toggleCamera() {
 }
 
 .task-input:focus {
-  border-color: #4a90d9;
+  border-color: var(--color-primary);
 }
 
 .task-button {
   padding: 12px 20px;
-  background-color: #4a90d9;
+  background-color: var(--color-primary);
   color: white;
   border: none;
   border-radius: 8px;
@@ -205,7 +205,7 @@ function toggleCamera() {
 }
 
 .task-button:hover:not(:disabled) {
-  background-color: #357abd;
+  background-color: var(--color-primary-dark);
 }
 
 .task-button:disabled {
@@ -253,8 +253,8 @@ function toggleCamera() {
   gap: 6px;
   padding: 8px 14px;
   background: white;
-  border: 1.5px solid #4a90d9;
-  color: #4a90d9;
+  border: 1.5px solid var(--color-primary);
+  color: var(--color-primary);
   border-radius: 6px;
   font-size: 0.875rem;
   cursor: pointer;
@@ -262,7 +262,7 @@ function toggleCamera() {
 }
 
 .image-label:hover:not(.disabled) {
-  background: #eaf2fb;
+  background: var(--color-primary-light);
 }
 
 .image-label.disabled {

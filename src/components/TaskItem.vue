@@ -1,6 +1,5 @@
 <template>
   <div class="task-item" :class="{ done: task.done }">
-    
     <!-- ÍCONE DE IMAGEM -->
     <div v-if="task.img_url" class="image-icon" @click="togglePreview">
       <svg
@@ -22,11 +21,7 @@
 
     <!-- TEXTO -->
     <label class="task-label">
-      <input
-        type="checkbox"
-        :checked="task.done"
-        @change="$emit('toggle', task.id)"
-      />
+      <input type="checkbox" :checked="task.done" @change="$emit('toggle', task.id)" />
       <span class="task-title">{{ task.title }}</span>
     </label>
 
@@ -40,7 +35,6 @@
     <div v-if="showPreview" class="preview-overlay" @click="togglePreview">
       <img :src="task.img_url" class="preview-image" />
     </div>
-
   </div>
 </template>
 
@@ -84,7 +78,7 @@ function togglePreview() {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #4a90d9;
+  color: var(--color-primary);
   cursor: pointer;
   padding: 4px;
   border-radius: 6px;
@@ -92,7 +86,7 @@ function togglePreview() {
 }
 
 .image-icon:hover {
-  background: #eef5ff;
+  background: var(--color-primary-light);
 }
 
 .task-label {
@@ -106,7 +100,7 @@ function togglePreview() {
 .task-label input[type='checkbox'] {
   width: 20px;
   height: 20px;
-  accent-color: #4a90d9;
+  accent-color: var(--color-primary);
 }
 
 .task-title {
@@ -127,7 +121,7 @@ function togglePreview() {
 .task-edit {
   background: none;
   border: none;
-  color: #4a90d9;
+  color: var(--color-primary);
   cursor: pointer;
   font-size: 0.85rem;
 }
@@ -146,7 +140,7 @@ function togglePreview() {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,0.7);
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
