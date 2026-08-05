@@ -11,7 +11,6 @@
     </div>
 
     <div class="image-section">
-
       <!-- Preview da imagem já salva ou capturada -->
       <img
         v-if="previewUrl || editingTask?.img_url"
@@ -20,7 +19,7 @@
         alt="Imagem da tarefa"
       />
 
-       <!-- Input com capture (padrão) -->
+      <!-- Input com capture (padrão) -->
       <label class="image-label" :class="{ disabled: uploading }">
         <span v-if="uploading" class="upload-status">Enviando...</span>
         <span v-else>
@@ -35,12 +34,21 @@
         <input
           type="file"
           accept="image/jpeg,image/png"
-          capture="environment"
+          :capture="cameraMode"
           class="image-input"
           :disabled="uploading"
           @change="handleImageChange"
         />
       </label>
+
+      <button
+        v-if="!previewUrl && !uploading"
+        type="button"
+        class="task-button-secondary"
+        @click="toggleCamera"
+      >
+        {{ cameraMode === 'environment' ? 'Usar selfie' : 'Usar traseira' }}
+      </button>
 
       <!-- Alternativa com preview ao vivo -->
       <button
@@ -64,6 +72,7 @@ import { ref, watch } from 'vue'
 import tasksApi from '../api/tasksApi.js'
 import CameraCapture from './CameraCapture.vue'
 
+const cameraMode = ref('environment')
 const showCameraCapture = ref(false)
 
 const props = defineProps({
@@ -138,20 +147,24 @@ function handleCancel() {
 }
 
 function handleCameraCapture(file) {
-  previewUrl.value = URL.createObjectURL(file);
-  uploading.value = true;
+  previewUrl.value = URL.createObjectURL(file)
+  uploading.value = true
   tasksApi
     .uploadImage(file)
     .then((response) => {
-      imgAttachmentKey.value = response.data.attachment_key;
+      imgAttachmentKey.value = response.data.attachment_key
     })
     .catch((err) => {
-      console.error(err);
-      previewUrl.value = null;
+      console.error(err)
+      previewUrl.value = null
     })
     .finally(() => {
-      uploading.value = false;
-    });
+      uploading.value = false
+    })
+}
+
+function toggleCamera() {
+  cameraMode.value = cameraMode.value === 'environment' ? 'user' : 'environment'
 }
 </script>
 
