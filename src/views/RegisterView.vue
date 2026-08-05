@@ -1,91 +1,86 @@
 <template>
   <div class="login-container">
-    <div v-if="route.query.registered === 'true'" class="success-message">
-      Conta criada com sucesso! Faça login.
-    </div>
-
-    <form class="login-form" @submit.prevent="handleLogin">
-      <h1>Entrar</h1>
+    <form class="login-form" @submit.prevent="handleRegister">
+      <h1>Criar conta</h1>
 
       <div v-if="errorMessage" class="error-message">
         {{ errorMessage }}
       </div>
 
       <div class="field">
-        <label for="email">Email</label>
-        <input
-          id="email"
-          v-model="email"
-          type="email"
-          placeholder="seu@email.com"
-          required
-          autocomplete="email"
-        />
+        <label>Email</label>
+        <input v-model="email" type="email" required />
       </div>
 
       <div class="field">
-        <label for="password">Senha</label>
-        <input
-          id="password"
-          v-model="password"
-          type="password"
-          placeholder="••••••••"
-          required
-          autocomplete="current-password"
-        />
+        <label>Senha</label>
+        <input v-model="password" type="password" required />
+      </div>
+
+      <div class="field">
+        <label>Confirmar senha</label>
+        <input v-model="confirmPassword" type="password" required />
       </div>
 
       <button type="submit" :disabled="loading">
-        {{ loading ? 'Entrando...' : 'Entrar' }}
+        {{ loading ? 'Cadastrando...' : 'Cadastrar' }}
       </button>
 
       <p>
-        Não tem conta?
-        <router-link to="/register">Criar conta</router-link>
+        Já tem conta?
+        <router-link to="/login">Entrar</router-link>
       </p>
     </form>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import authApi from '@/api/authApi';
 
-const router = useRouter()
-const route = useRoute() 
-const authStore = useAuthStore()
+const router = useRouter();
 
-const email = ref('')
-const password = ref('')
-const loading = ref(false)
-const errorMessage = ref('')
+const email = ref('');
+const password = ref('');
+const confirmPassword = ref('');
+const loading = ref(false);
+const errorMessage = ref('');
 
-async function handleLogin() {
-  loading.value = true
-  errorMessage.value = ''
+async function handleRegister() {
+  errorMessage.value = '';
+
+  // validação frontend
+  if (password.value !== confirmPassword.value) {
+    errorMessage.value = 'As senhas não coincidem';
+    return;
+  }
+
+  loading.value = true;
 
   try {
-    await authStore.login(email.value, password.value)
-    router.push('/')
+    await authApi.register(email.value, password.value);
+
+    // redireciona com query param
+    router.push('/login?registered=true');
   } catch (err) {
     errorMessage.value =
-      err.response?.data?.detail ??
-      'Erro ao entrar. Verifique suas credenciais.'
+      err.response?.data?.detail || 'Erro ao cadastrar';
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 </script>
 
 <style scoped>
-/* container centralizado */
+/* container */
 .login-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100vh;
   background: linear-gradient(135deg, #4f46e5, #3b82f6);
+  padding: 1rem;
 }
 
 /* card */
@@ -94,8 +89,8 @@ async function handleLogin() {
   padding: 2rem;
   border-radius: 12px;
   width: 100%;
-  max-width: 380px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 }
 
 /* título */
@@ -117,7 +112,7 @@ async function handleLogin() {
 }
 
 .field input {
-  padding: 0.6rem;
+  padding: 0.7rem;
   border-radius: 6px;
   border: 1px solid #ccc;
   transition: 0.2s;
@@ -126,12 +121,13 @@ async function handleLogin() {
 .field input:focus {
   border-color: #4f46e5;
   outline: none;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
 }
 
 /* botão */
 button {
   width: 100%;
-  padding: 0.7rem;
+  padding: 0.8rem;
   background: #4f46e5;
   color: white;
   border: none;
