@@ -6,15 +6,14 @@ const tasksApi = {
   },
 
   create(payload) {
-    const body = {
-      title: payload.title,
-    }
-
+    const request = payload
     if (payload.imgAttachmentKey != null) {
-      body.img_attachment_key = payload.imgAttachmentKey
+      request.img_attachment_key = payload.imgAttachmentKey
     }
-
-    return apiClient.post('/tasks', body)
+    if (payload.location != null) {
+      request.location = payload.location
+    }
+    return apiClient.post('/tasks', request)
   },
 
   update(id, data) {

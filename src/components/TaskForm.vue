@@ -1,17 +1,29 @@
 <template>
   <form class="task-form" @submit.prevent="handleSubmit">
     <div class="task-row">
-      <input v-model="newTask" type="text" placeholder="Nova tarefa..." class="task-input" />
+      <input
+        v-model="newTask"
+        type="text"
+        placeholder="Nova tarefa..."
+        class="task-input"
+      />
+
       <button type="submit" class="task-button" :disabled="uploading">
         {{ editingTask ? 'Alterar' : 'Adicionar' }}
       </button>
-      <button v-if="editingTask" type="button" class="task-button-cancel" @click="handleCancel">
+
+      <button
+        v-if="editingTask"
+        type="button"
+        class="task-button-cancel"
+        @click="handleCancel"
+      >
         Cancelar
       </button>
     </div>
 
+    <!-- IMAGEM -->
     <div class="image-section">
-      <!-- Preview da imagem já salva ou capturada -->
       <img
         v-if="previewUrl || editingTask?.img_url"
         :src="previewUrl || editingTask?.img_url"
@@ -19,9 +31,11 @@
         alt="Imagem da tarefa"
       />
 
-      <!-- Input com capture (padrão) -->
       <label class="image-label" :class="{ disabled: uploading }">
-        <span v-if="uploading" class="upload-status">Enviando...</span>
+        <span v-if="uploading" class="upload-status">
+          Enviando...
+        </span>
+
         <span v-else>
           {{
             previewUrl || editingTask?.img_url
@@ -31,6 +45,7 @@
                 : 'Adicionar imagem'
           }}
         </span>
+
         <input
           type="file"
           accept="image/jpeg,image/png"
@@ -50,7 +65,6 @@
         {{ cameraMode === 'environment' ? 'Usar selfie' : 'Usar traseira' }}
       </button>
 
-      <!-- Alternativa com preview ao vivo -->
       <button
         type="button"
         class="task-button-secondary"
@@ -59,10 +73,70 @@
         {{ showCameraCapture ? 'Fechar câmera' : 'Abrir preview ao vivo' }}
       </button>
 
-      <CameraCapture v-if="showCameraCapture" @captured="handleCameraCapture" />
+      <CameraCapture
+        v-if="showCameraCapture"
+        @captured="handleCameraCapture"
+      />
+
       <p class="image-help">
         Em celular, o botão pode abrir a câmera. Em notebook, abre o seletor de arquivos.
       </p>
+    </div>
+
+    <!-- LOCALIZAÇÃO -->
+    <div class="location-section">
+      <div class="location-actions">
+        <button
+          type="button"
+          class="task-button-secondary"
+          :disabled="loadingLocation"
+          @click="handleGetLocation"
+        >
+          {{
+            loadingLocation
+              ? 'Obtendo localização...'
+              : location
+                ? 'Atualizar localização'
+                : 'Usar localização atual'
+          }}
+        </button>
+
+        <button
+          v-if="location"
+          type="button"
+          class="task-button-cancel"
+          @click="handleClearLocation"
+        >
+          Remover localização
+        </button>
+      </div>
+
+      <p v-if="locationError" class="location-error">
+        {{ locationError }}
+      </p>
+
+      <div v-if="location" class="location-info">
+        <strong>Localização:</strong>
+
+        <span>
+          {{ location.label || 'Endereço não identificado' }}
+        </span>
+
+        <small>
+          Coordenadas:
+          {{ location.latitude.toFixed(6) }},
+          {{ location.longitude.toFixed(6) }}
+        </small>
+
+        <small v-if="location.accuracy">
+          Precisão aproximada: {{ Math.round(location.accuracy) }} metros
+        </small>
+      </div>
+
+      <TaskLocationMap
+        v-if="location"
+        :location="location"
+      />
     </div>
   </form>
 </template>
@@ -70,10 +144,11 @@
 <script setup>
 import { ref, watch } from 'vue'
 import tasksApi from '../api/tasksApi.js'
+import geocodingApi from '../api/geocodingApi.js'
+import { useGeolocation } from '../composables/useGeolocation.js'
+import { buildLocationPayload } from '../utils/location.js'
 import CameraCapture from './CameraCapture.vue'
-
-const cameraMode = ref('environment')
-const showCameraCapture = ref(false)
+import TaskLocationMap from './TaskLocationMap.vue'
 
 const props = defineProps({
   editingTask: {
@@ -83,34 +158,93 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['add', 'update', 'cancel'])
+
+/* -------------------------
+   TAREFA
+------------------------- */
+
 const newTask = ref('')
+
+/* -------------------------
+   IMAGEM / CÂMERA
+------------------------- */
+
+const cameraMode = ref('environment')
+const showCameraCapture = ref(false)
 const previewUrl = ref(null)
 const imgAttachmentKey = ref(null)
 const uploading = ref(false)
 
-const isMobileDevice = ref(!window.matchMedia('(pointer: fine)').matches)
+const isMobileDevice = ref(
+  !window.matchMedia('(pointer: fine)').matches
+)
 
+/* -------------------------
+   LOCALIZAÇÃO
+------------------------- */
+
+const {
+  location,
+  loadingLocation,
+  locationError,
+  requestCurrentLocation,
+  readPermissionState,
+  setLocationFromTask,
+  clearLocation,
+  setLocationLabel,
+} = useGeolocation()
+
+/*
+ * Quando o formulário entra em modo de edição,
+ * carregamos os dados da tarefa, inclusive a localização.
+ */
 watch(
   () => props.editingTask,
   (task) => {
     newTask.value = task ? task.title : ''
-    if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
+
+    if (previewUrl.value) {
+      URL.revokeObjectURL(previewUrl.value)
+    }
+
     previewUrl.value = null
     imgAttachmentKey.value = null
+
+    if (task) {
+      setLocationFromTask(task)
+    } else {
+      clearLocation()
+    }
+
+    readPermissionState()
   },
+  { immediate: true },
 )
+
+/* -------------------------
+   IMAGEM
+------------------------- */
 
 async function handleImageChange(event) {
   const file = event.target.files[0]
+
   if (!file) return
-  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
+
+  if (previewUrl.value) {
+    URL.revokeObjectURL(previewUrl.value)
+  }
+
   previewUrl.value = URL.createObjectURL(file)
   uploading.value = true
+
   try {
     const response = await tasksApi.uploadImage(file)
-    imgAttachmentKey.value = response.data.attachment_key
+
+    imgAttachmentKey.value =
+      response.data.attachment_key
   } catch (err) {
     console.error('Erro ao fazer upload da imagem', err)
+
     previewUrl.value = null
     imgAttachmentKey.value = null
   } finally {
@@ -118,45 +252,25 @@ async function handleImageChange(event) {
   }
 }
 
-function handleSubmit() {
-  if (!newTask.value.trim()) return
-
-  const payload = {
-    title: newTask.value.trim(),
-    imgAttachmentKey: imgAttachmentKey.value,
-  }
-
-  if (props.editingTask) {
-    emit('update', props.editingTask.id, payload)
-  } else {
-    emit('add', payload)
-  }
-
-  newTask.value = ''
-  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
-  previewUrl.value = null
-  imgAttachmentKey.value = null
-}
-
-function handleCancel() {
-  newTask.value = ''
-  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
-  previewUrl.value = null
-  imgAttachmentKey.value = null
-  emit('cancel')
-}
-
 function handleCameraCapture(file) {
+  if (previewUrl.value) {
+    URL.revokeObjectURL(previewUrl.value)
+  }
+
   previewUrl.value = URL.createObjectURL(file)
   uploading.value = true
+
   tasksApi
     .uploadImage(file)
     .then((response) => {
-      imgAttachmentKey.value = response.data.attachment_key
+      imgAttachmentKey.value =
+        response.data.attachment_key
     })
     .catch((err) => {
-      console.error(err)
+      console.error('Erro ao fazer upload da imagem', err)
+
       previewUrl.value = null
+      imgAttachmentKey.value = null
     })
     .finally(() => {
       uploading.value = false
@@ -164,7 +278,104 @@ function handleCameraCapture(file) {
 }
 
 function toggleCamera() {
-  cameraMode.value = cameraMode.value === 'environment' ? 'user' : 'environment'
+  cameraMode.value =
+    cameraMode.value === 'environment'
+      ? 'user'
+      : 'environment'
+}
+
+/* -------------------------
+   LOCALIZAÇÃO
+------------------------- */
+
+async function handleGetLocation() {
+  const captured = await requestCurrentLocation()
+
+  if (!captured) return
+
+  /*
+   * Primeiro capturamos a localização.
+   * Só depois consultamos o endereço.
+   */
+  try {
+    const address = await geocodingApi.reverse(
+      captured.latitude,
+      captured.longitude,
+    )
+
+    setLocationLabel(address?.label)
+  } catch (err) {
+    console.error('Erro ao buscar endereço', err)
+
+    /*
+     * A localização continua válida mesmo
+     * se o geocoder falhar.
+     */
+    locationError.value =
+      'Localização obtida, mas não foi possível identificar a rua.'
+  }
+}
+
+function handleClearLocation() {
+  clearLocation()
+}
+
+/* -------------------------
+   SALVAR / EDITAR
+------------------------- */
+
+function handleSubmit() {
+  if (!newTask.value.trim()) return
+
+  /*
+   * buildLocationPayload transforma o estado
+   * da localização no formato esperado pela API.
+   *
+   * Se location for null, todos os campos ficam null.
+   */
+  const locationPayload = buildLocationPayload(
+    location.value,
+  )
+
+  const payload = {
+    title: newTask.value.trim(),
+
+    imgAttachmentKey:
+      imgAttachmentKey.value,
+
+    ...locationPayload,
+  }
+
+  if (props.editingTask) {
+    emit(
+      'update',
+      props.editingTask.id,
+      payload,
+    )
+  } else {
+    emit('add', payload)
+  }
+
+  resetForm()
+}
+
+function handleCancel() {
+  resetForm()
+  emit('cancel')
+}
+
+function resetForm() {
+  newTask.value = ''
+
+  if (previewUrl.value) {
+    URL.revokeObjectURL(previewUrl.value)
+  }
+
+  previewUrl.value = null
+  imgAttachmentKey.value = null
+
+  clearLocation()
+  showCameraCapture.value = false
 }
 </script>
 
@@ -221,17 +432,36 @@ function toggleCamera() {
   border-radius: 8px;
   font-size: 1rem;
   cursor: pointer;
-  transition: border-color 0.2s;
 }
 
 .task-button-cancel:hover {
   border-color: #aaa;
 }
 
+.task-button-secondary {
+  padding: 8px 14px;
+  background-color: white;
+  color: var(--color-primary);
+  border: 1.5px solid var(--color-primary);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.task-button-secondary:hover:not(:disabled) {
+  background-color: var(--color-primary-light);
+}
+
+.task-button-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .image-section {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
   padding: 10px 12px;
   background: #f8f9fa;
   border-radius: 8px;
@@ -258,7 +488,6 @@ function toggleCamera() {
   border-radius: 6px;
   font-size: 0.875rem;
   cursor: pointer;
-  transition: background-color 0.2s;
 }
 
 .image-label:hover:not(.disabled) {
@@ -279,9 +508,44 @@ function toggleCamera() {
 }
 
 .image-help {
+  width: 100%;
   font-size: 0.75rem;
   color: #999;
   margin: 0;
-  flex-basis: 100%;
+}
+
+/* LOCALIZAÇÃO */
+
+.location-section {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px dashed #ccc;
+}
+
+.location-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.location-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 10px;
+  font-size: 0.875rem;
+}
+
+.location-info small {
+  color: #777;
+  font-size: 0.75rem;
+}
+
+.location-error {
+  margin: 8px 0 0;
+  color: #c0392b;
+  font-size: 0.875rem;
 }
 </style>
